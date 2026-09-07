@@ -1061,6 +1061,31 @@ void paper_style_diff_xs_from_acqu(const char* fname="Acqu_CBTagg_31837.root",
         std::cout << "Using channel-dependent/fallback eps_det. Paper-bin eps_det is disabled by default." << std::endl;
     }
 
+    // A channel must contribute to the differential yield only if the same
+    // channel can also contribute to its normalization.  Otherwise events
+    // from channels with missing/bad scaler or tagging-efficiency values
+    // would remain in the numerator while being absent from the denominator.
+    std::vector<bool> validNormChannel(nCh, false);
+
+    for(int ch=0; ch<nValidCh; ++ch) {
+
+        const double epsTagUse =
+            haveTaggEffFile ? epsTagByCh[ch] : eps_tag;
+
+        const double epsDetUse =
+            haveEpsDetFile ? epsDetByCh[ch] : eps_det;
+
+        bool valid =
+            (Ne[ch] >= minScalerSum &&
+             epsTagUse >= minEpsTag &&
+             thickness > 0.0);
+
+        if(!haveEpsDetPaperFile)
+            valid = valid && (epsDetUse >= minEpsDet);
+
+        validNormChannel[ch] = valid;
+    }
+
     TH1D* hMMp[nCh];
     TH1D* hMMr[nCh];
     std::vector< std::vector<TH1D*> > hMMpPaper;
@@ -1312,7 +1337,10 @@ void paper_style_diff_xs_from_acqu(const char* fname="Acqu_CBTagg_31837.root",
                 hMMr[ch]->Fill(mm);
             }
 
-            if(ie >= 0 && thetaCmDeg >= thetaCmMinDeg && thetaCmDeg < thetaCmMaxDeg) {
+            if(ie >= 0 &&
+               validNormChannel[ch] &&
+               thetaCmDeg >= thetaCmMinDeg &&
+               thetaCmDeg < thetaCmMaxDeg) {
                 int ith = int((thetaCmDeg - thetaCmMinDeg) / thetaCmBinWidthDeg);
                 if(ith >= 0 && ith < nThetaBins) {
                     if(weight > 0.0) {
@@ -1390,10 +1418,8 @@ void paper_style_diff_xs_from_acqu(const char* fname="Acqu_CBTagg_31837.root",
         if(epsTagUse > 0.0 && dEpsTagUse > 0.0) relNorm2 += (dEpsTagUse/epsTagUse) * (dEpsTagUse/epsTagUse);
         if(!haveEpsDetPaperFile && epsDetUse > 0.0 && dEpsDetUse > 0.0) relNorm2 += (dEpsDetUse/epsDetUse) * (dEpsDetUse/epsDetUse);
 
-        bool validNorm = (Ne[ch] >= minScalerSum &&
-                          epsTagUse >= minEpsTag &&
-                          thickness > 0.0);
-        if(!haveEpsDetPaperFile) validNorm = validNorm && (epsDetUse >= minEpsDet);
+        // Use exactly the same channel mask as for the differential yield.
+        bool validNorm = validNormChannel[ch];
 
         double normDen = 0.0;
         if(validNorm) {
