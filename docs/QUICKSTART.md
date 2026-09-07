@@ -1,0 +1,187 @@
+# Quick start
+
+This guide is intentionally machine-independent. Replace the example paths once, then run the macros from dedicated output directories.
+
+## 1. Define your local paths
+
+Example shell setup:
+
+```bash
+export PI0_ANALYSIS=/path/to/pi0-analysis
+export DATA_DIR=/path/to/acqu-data
+export MC_DIR=/path/to/acqu-mc
+export AUX_DIR=/path/to/auxiliary-files
+export ANALYSIS_OUTPUT=/path/to/analysis-output
+
+export DATA_RUN=$DATA_DIR/Acqu_CBTagg_31837.root
+export MC_FULL=$MC_DIR/Acqu_geant_He4pi0.root
+export FPD_MAP=$AUX_DIR/FPD_855_new.dat
+export TAGG_EFF=$AUX_DIR/ExpBkgSub_COPP_TaggEff_31834.dat
+```
+
+The exact input formats are documented in `INPUTS_AND_FORMATS.md`.
+
+## 2. Minimal pi0 reconstruction check
+
+```bash
+mkdir -p "$ANALYSIS_OUTPUT/pi0_check"
+cd "$ANALYSIS_OUTPUT/pi0_check"
+
+root -l -b -q "$PI0_ANALYSIS/macros/diagnostics/check_pi0_from_acqu.C(\"$DATA_RUN\",200000,20.0,1.0)"
+```
+
+This is a reconstruction smoke test, not a cross-section extraction.
+
+## 3. Build the paper-bin detection efficiency
+
+Choose the same missing-mass window that will be used for the data yield. The values below are the historical macro defaults and are shown only as an explicit example:
+
+```bash
+export MMMIN=-10
+export MMMAX=40
+
+mkdir -p "$ANALYSIS_OUTPUT/efficiency"
+cd "$ANALYSIS_OUTPUT/efficiency"
+
+root -l -b <<ROOTEOF
+.L $PI0_ANALYSIS/macros/efficiency/eps_det_paper_bins_from_acqu_geant.C+
+
+eps_det_paper_bins_from_acqu_geant(
+    "$MC_FULL",
+    -1,
+    20.0,
+    1.0,
+    110.0,
+    155.0,
+    true,
+    $MMMIN,
+    $MMMAX,
+    5.0,
+    150.0,
+    5.0,
+    50000
+);
+.q
+ROOTEOF
+```
+
+Main output:
+
+```text
+eps_det_paper_bins_from_acqu_geant.txt
+```
+
+The generated denominator assumes isotropic CM generation.
+
+## 4. Differential cross section
+
+```bash
+mkdir -p "$ANALYSIS_OUTPUT/cross_section"
+cd "$ANALYSIS_OUTPUT/cross_section"
+
+EPS_TABLE="$ANALYSIS_OUTPUT/efficiency/eps_det_paper_bins_from_acqu_geant.txt"
+
+root -l -b <<ROOTEOF
+.L $PI0_ANALYSIS/macros/cross_section/paper_style_diff_xs_from_acqu.C+
+
+paper_style_diff_xs_from_acqu(
+    "$DATA_RUN",
+    -1,
+    0.20,
+    0.7064,
+    0.940e-7,
+    true,
+    1.0e7,
+    "$FPD_MAP",
+    700.0,
+    800.0,
+    450.0,
+    680.0,
+    $MMMIN,
+    $MMMAX,
+    110.0,
+    155.0,
+    "",
+    1.0,
+    "",
+    0.02,
+    "$TAGG_EFF",
+    0.02,
+    5.0,
+    150.0,
+    5.0,
+    true,
+    "$EPS_TABLE"
+);
+.q
+ROOTEOF
+```
+
+Main products include:
+
+```text
+paper_style_dsigma_dOmega_cm_from_acqu.txt
+paper_style_dsigma_dOmega_cm_from_acqu.root
+paper_style_dsigma_dOmega_cm_by_energy.pdf
+paper_style_dsigma_dOmega_cm_grouped6_overlay.pdf
+```
+
+`paper_style_diff_xs_from_acqu.C` calculates Phi-min / opening-angle diagnostics but does not apply the Fig. 2 DeltaPhi cut to the cross-section yield.
+
+## 5. Background diagnostics
+
+Run these in a different output directory because `background_diagnostics_from_acqu.C` also writes `sigma_from_acqu.*` files.
+
+```bash
+mkdir -p "$ANALYSIS_OUTPUT/background"
+cd "$ANALYSIS_OUTPUT/background"
+```
+
+See `DIAGNOSTICS_AND_STUDIES.md` for the available diagnostic macros.
+
+## 6. Fig. 2 fast/template workflow
+
+Define the prepared inputs:
+
+```bash
+export FIG2_DATA_DIR=/path/to/prepared-full-empty
+export FIG2_MC_DIR=/path/to/prepared-fig2-mc
+```
+
+Then:
+
+```bash
+mkdir -p "$ANALYSIS_OUTPUT/fig2"
+cd "$ANALYSIS_OUTPUT/fig2"
+
+root -l -b <<ROOTEOF
+.L $PI0_ANALYSIS/macros/fig2/fig2_refit_coherent_incoherent_fullminus_empty.C+
+
+fig2_refit_coherent_incoherent_fullminus_empty(
+    "$FIG2_DATA_DIR/fig2_full_empty_full33_minus_empty5.root",
+    "$FIG2_MC_DIR/paper_fig2_missing_energy_cut8_coh224_294_320_366new.root",
+    "$FIG2_MC_DIR/paper_fig2_missing_energy_cut10_coh224_294_320_366new.root",
+    "$FIG2_MC_DIR/paper_fig2_missing_energy_cut12_coh224_294_320_366new.root",
+    "$FIG2_MC_DIR/fig2_he3n_all_available_bins_wide_highstat294_320_366.root",
+    "$FIG2_MC_DIR/fig2_tp_E3_366_wide.root",
+    "full33_minus_empty5",
+    -60.0,
+    40.0,
+    -60.0,
+    -20.0
+);
+.q
+ROOTEOF
+```
+
+The precomputed FULL-EMPTY file is useful for fast inspection. For new production results, regenerate FULL-EMPTY normalization with the corrected zero-based tagging-efficiency parser; see `FIG2_WORKFLOW.md`.
+
+## 7. Before interpreting physics
+
+Read `VALIDATION_STATUS.md`. In particular:
+
+- the FPD map is required for production normalization;
+- the tagging-efficiency table is zero-based;
+- data and MC efficiency selections must match;
+- the Acqu/Geant paper-bin denominator assumes isotropic CM generation;
+- the final coherent-event selection is a physics choice, not something to tune against the paper overlay.

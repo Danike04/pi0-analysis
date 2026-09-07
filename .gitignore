@@ -1,0 +1,18 @@
+# ROOT data and generated ROOT files
+*.root
+
+# ROOT / ACLiC build products
+*.so
+*.pcm
+*_C.d
+*_C_ACLiC_dict.cxx
+*_C_ACLiC_dict_rdict.pcm
+
+# Generated analysis plots
+*.pdf
+
+# Temporary/editor files
+*~
+*.swp
+*.swo
+.DS_Store
