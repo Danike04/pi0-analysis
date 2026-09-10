@@ -189,5 +189,3 @@ NOT YET TESTED
 ```
 
 Use that file before treating an output as final physics.
-
-Just a test
