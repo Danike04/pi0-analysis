@@ -14,6 +14,17 @@ macros/
   diagnostics/     reconstruction and normalization diagnostics
   studies/         campaign-specific or development studies
 
+inputs/
+  fpd/             validated FPD scaler map
+  tagging_efficiency/
+  detection_efficiency/
+
+config/
+  RUN_TAGGEFF_MAP.md
+
+scripts/
+  build_hybrid_efficiency.py
+
 docs/
   QUICKSTART.md
   INPUTS_AND_FORMATS.md
@@ -29,7 +40,8 @@ docs/
 - ROOT 6
 - a C++ compiler usable by ROOT/ACLiC
 - Acqu ROOT files with the trees required by the chosen macro
-- the external FPD map, tagging-efficiency table and MC inputs required by the workflow
+- external experimental and Monte-Carlo ROOT files required by the workflow
+- the small campaign auxiliary inputs versioned under `inputs/`
 
 Typical ROOT usage is:
 
@@ -44,6 +56,30 @@ then, for example:
 ```
 
 Run production macros from a separate output directory because many historical macros intentionally keep fixed output filenames.
+
+## Versioned auxiliary inputs
+
+Small campaign inputs required by the retained analysis are stored directly in the repository:
+
+```text
+inputs/fpd/FPD_855_new.dat
+inputs/tagging_efficiency/
+inputs/detection_efficiency/eps_det_paper_bins_final_highstat.txt
+```
+
+Validated run-to-tagging-efficiency assignments are recorded in:
+
+```text
+config/RUN_TAGGEFF_MAP.md
+```
+
+Large experimental and Monte-Carlo ROOT files remain external.
+
+The retained high-statistics paper-bin detection-efficiency table can be rebuilt from broad and dedicated coherent-MC efficiency tables using:
+
+```text
+scripts/build_hybrid_efficiency.py
+```
 
 ## Main production chain
 
@@ -139,7 +175,6 @@ docs/FIG2_WORKFLOW.md
 ## Production versus studies
 
 The recommended production macros are under `macros/cross_section`, `macros/efficiency` and `macros/fig2`. Files under `macros/studies` are retained as useful cross-checks or campaign-specific development work and should not be substituted silently for the production workflow.
-
 
 ## Validation
 
