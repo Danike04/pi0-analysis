@@ -66,7 +66,7 @@ with histogram interface:
 ```text
 inc_deltaE_E<0..3>_nodphi
 inc_deltaE_E<0..3>_dphi8
-inc_deltaE_E_E<0..3>_dphi10
+inc_deltaE_E<0..3>_dphi10
 inc_deltaE_E<0..3>_dphi12
 ```
 
