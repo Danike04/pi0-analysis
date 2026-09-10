@@ -98,13 +98,60 @@ and therefore assumes isotropic CM generation.
 
 If the data yield uses a missing-mass selection, the MC efficiency must be regenerated with the same selection.
 
+### Retained high-statistics hybrid table
+
+**Status: SANITY CHECKED / reproducibility PASS**
+
+The retained table is:
+
+```text
+inputs/detection_efficiency/eps_det_paper_bins_final_highstat.txt
+```
+
+It uses the broad coherent MC for the full 17-bin coverage, with the following energy bins replaced by dedicated higher-statistics coherent MC results:
+
+```text
+223-234 MeV -> 224coh
+283-294 MeV -> 294coh
+319-330 MeV -> 320coh
+356-366 MeV -> 366coh
+```
+
+The broad and dedicated tables used for this replacement were generated with the same retained reconstruction selections, including the missing-mass cut `[-10,40] MeV`.
+
+`scripts/build_hybrid_efficiency.py` reproduces the replacement deterministically and checks the angular-bin keys before replacing rows. Its numerical output was compared with the retained table and gave an exact match.
+
 ## Differential cross section
 
 ### `paper_style_diff_xs_from_acqu.C`
 
-**Status: RUNS / SANITY CHECKED on full statistics**
+**Status: RUNS / SANITY CHECKED on full statistics; normalization consistency checked**
 
 The chain has been exercised with the real FPD mapping, corrected zero-based tagging efficiency and a complete paper-bin efficiency table. All 17 photon-energy bins can be populated.
+
+A consistency issue was found while comparing two non-overlapping data samples: channels rejected from the photon-flux normalization could still contribute to the event yield. The production macro now constructs one `validNormChannel` mask and applies it to both numerator and denominator.
+
+The corrected workflow was reprocessed independently for:
+
+```text
+runs 31840-31849 -> ExpBkgSub_COPP_TaggEff_31834.dat
+runs 32330-32339 -> ExpBkgSub_COPP_TaggEff_32313.dat
+```
+
+using the retained high-statistics hybrid detection-efficiency table.
+
+For the 487 common `(Egamma,theta_cm)` points, the statistical comparison between the two extracted data samples gave:
+
+```text
+mean pull               = -0.0062
+RMS pull                =  1.1303
+chi2/N                  =  1.2750
+median xs323/xs318      =  1.0050
+```
+
+For the 283--294 MeV bin, where the broad-MC efficiency had produced a strong common point-to-point structure, the local fluctuation correlation decreased from approximately `0.90` to approximately `0.23` after using the dedicated higher-statistics coherent MC.
+
+These two run groups are statistically independent experimental event samples. The extracted cross sections still share common systematic corrections, including the detection efficiency, so this comparison is a consistency check rather than a proof of complete systematic independence.
 
 The pipeline is technically operational. The final coherent-event MM selection remains a physics choice and should not be chosen by tuning agreement with the embedded paper reference.
 
@@ -157,5 +204,7 @@ Prepared `he4_*` histogram files remain useful for fast code/interface checks. B
 ## Overall repository state
 
 The retained package contains an operational analysis chain for reconstruction, FPD/scaler normalization, tagging efficiency, Acqu/Geant detection efficiency, differential cross section, background diagnostics and Fig. 2 template studies.
+
+Small campaign inputs required for the retained production cross-section workflow are now versioned under `inputs/`, while large experimental and Monte-Carlo ROOT files remain external.
 
 Known remaining physics caveats are explicit rather than hidden in path or parser assumptions.
