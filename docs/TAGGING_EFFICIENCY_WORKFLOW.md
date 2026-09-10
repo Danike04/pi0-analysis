@@ -1,6 +1,6 @@
 # Tagging efficiency and beam normalization
 
-## External production table
+## Versioned production tables
 
 The cross-section workflow accepts a text table with rows:
 
@@ -8,7 +8,29 @@ The cross-section workflow accepts a text table with rows:
 channel  eps_tag  deps_tag
 ```
 
-The production table used in this analysis is **zero-based**. The parser therefore uses the file channel directly and does not subtract one.
+The retained campaign tables are stored under:
+
+```text
+inputs/tagging_efficiency/
+```
+
+Currently versioned files include:
+
+```text
+ExpBkgSub_COPP_TaggEff_31834.dat
+ExpBkgSub_COPP_TaggEff_32284.dat
+ExpBkgSub_COPP_TaggEff_32313.dat
+```
+
+Validated run-to-table assignments used in retained cross-checks are recorded in:
+
+```text
+config/RUN_TAGGEFF_MAP.md
+```
+
+Do not infer an undocumented run range from the filename alone.
+
+The production tables used in this analysis are **zero-based**. The parser therefore uses the file channel directly and does not subtract one.
 
 The same convention is used by `fig2_full_empty_subtraction_many_both.C` for FULL/EMPTY photon-flux normalization.
 
@@ -50,13 +72,17 @@ The PS method was sanity-checked on the dedicated normal-current runs 32608/3260
 
 ## FPD scaler diagnostics
 
-`diagnose_acqu_scalers.C` retains the historical contiguous-scaler treatment as a diagnostic example. It is **not** the production mapping. Production code must use the FPD map.
+`diagnose_acqu_scalers.C` retains the historical contiguous-scaler treatment as a diagnostic example. It is **not** the production mapping. Production code must use the FPD map:
+
+```text
+inputs/fpd/FPD_855_new.dat
+```
 
 ## Normalization chain
 
 ```text
-FPD map -> scaler index -> electron counts Ne
-external eps_tag(channel)
+versioned FPD map -> scaler index -> electron counts Ne
+selected eps_tag(channel) table
 Ne * eps_tag -> photon flux
 ```
 
