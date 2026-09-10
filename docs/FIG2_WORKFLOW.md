@@ -51,6 +51,8 @@ Acqu_geant_He4pi0_320coh.root
 Acqu_geant_He4pi0_366coh.root
 ```
 
+These large ROOT files and prepared template ROOT files are not versioned in Git.
+
 ## 3He+n breakup template
 
 The retained high-stat prepared input is:
@@ -64,7 +66,7 @@ with histogram interface:
 ```text
 inc_deltaE_E<0..3>_nodphi
 inc_deltaE_E<0..3>_dphi8
-inc_deltaE_E<0..3>_dphi10
+inc_deltaE_E_E<0..3>_dphi10
 inc_deltaE_E<0..3>_dphi12
 ```
 
@@ -114,7 +116,20 @@ he4_cut12_E0..E3
 
 ### Normalization requirements
 
-The FULL-EMPTY macro requires the real non-contiguous FPD map for production. The external tagging-efficiency table is interpreted as **zero-based**, matching the validated cross-section convention.
+The FULL-EMPTY macro requires the real non-contiguous FPD map and the appropriate tagging-efficiency table for production. Retained small campaign inputs are versioned under:
+
+```text
+inputs/fpd/
+inputs/tagging_efficiency/
+```
+
+Run-to-tagging-efficiency assignments that were explicitly validated are recorded in:
+
+```text
+config/RUN_TAGGEFF_MAP.md
+```
+
+The tagging-efficiency tables are interpreted as **zero-based**, matching the validated cross-section convention.
 
 During final repository review the historical `fileChannel - 1` shift in this FULL-EMPTY parser was corrected to `fileChannel`. Therefore precomputed FULL-EMPTY products made with the shifted parser should be regenerated before they are treated as final normalized physics outputs.
 
